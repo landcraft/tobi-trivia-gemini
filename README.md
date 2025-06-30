@@ -120,20 +120,57 @@ This repository is configured with GitHub Actions to automatically build and pus
     * Go to the "Actions" tab in your GitHub repository to monitor the build progress.
     * Upon successful completion, your Docker images will be available in your GitHub Package Registry (GHCR) under the "Packages" tab of your GitHub profile/repository.
 
-### Pulling Docker Images from GHCR
+### Pulling and Running Docker Images from GHCR
 
-GitHub users can pull your images using the `docker pull` command. The image names will follow this format:
+Once the Docker images are published to GHCR, other users (or you on a different machine) can pull and run them without needing to build them from source.
 
-* **Frontend:** `ghcr.io/YOUR_USERNAME/YOUR_REPOSITORY_NAME/frontend:latest` (or a specific tag/commit SHA)
-* **Backend:** `ghcr.io/YOUR_USERNAME/YOUR_REPOSITORY_NAME/backend:latest` (or a specific tag/commit SHA)
+1.  **Pull the Docker Images:**
+    ```bash
+    docker pull ghcr.io/YOUR_USERNAME/tobi-trivia-app/frontend:latest
+    docker pull ghcr.io/YOUR_USERNAME/tobi-trivia-app/backend:latest
+    ```
+    (Replace `YOUR_USERNAME` and `tobi-trivia-app` with your actual GitHub username and repository name).
 
-Example:
-```bash
-docker pull ghcr.io/your-username/tobi-trivia-app/frontend:latest
-docker pull ghcr.io/your-username/tobi-trivia-app/backend:latest
-```
+2.  **Create a `.env` file for deployment:**
+    In the directory where you want to run the application, create a `.env` file with your environment variables (as described in "Local Development Setup" step 2).
 
-Users can then use your `docker-compose.yml` (modified to pull images instead of build them) to run the application.
+3.  **Create a `docker-compose.yml` for deployment:**
+    Create a `docker-compose.yml` file in the same directory. Note that this version uses `image:` instead of `build:` to pull pre-built images.
+
+    ```yaml
+    # docker-compose.yml (for running pre-built images from GHCR)
+    version: '3.8'
+
+    services:
+      frontend:
+        image: ghcr.io/YOUR_USERNAME/tobi-trivia-app/frontend:latest # Replace YOUR_USERNAME and tobi-trivia-app
+        ports:
+          - "80:80"
+        depends_on:
+          - backend
+        restart: unless-stopped
+
+      backend:
+        image: ghcr.io/YOUR_USERNAME/tobi-trivia-app/backend:latest # Replace YOUR_USERNAME and tobi-trivia-app
+        ports:
+          - "5000:5000"
+        environment:
+          # These variables will be read from your .env file
+          GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+          SUPABASE_URL: ${SUPABASE_URL}
+          SUPABASE_KEY: ${SUPABASE_KEY}
+        restart: unless-stopped
+    ```
+    (Remember to replace `YOUR_USERNAME` and `tobi-trivia-app` in the `image:` lines).
+
+4.  **Run the application:**
+    ```bash
+    docker-compose up -d
+    ```
+    This will start the frontend and backend services using the pre-built Docker images.
+
+5.  **Access the application:**
+    Open your web browser and navigate to `http://localhost`.
 
 ## Future Enhancements (Backend Implementation)
 
