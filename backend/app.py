@@ -1,16 +1,17 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+from flask import Flask, jsonify, request, send_from_directory, render_template # type: ignore
+from flask_cors import CORS # type: ignore
 import os
 import json
-# Import the Google Generative AI client library
-import google.generativeai as genai
+import google.generativeai as genai # type: ignore
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder='./backend/static',  # Point to where static files are copied
+    template_folder='./backend/templates' # Point to where index.html is copied
+)
 CORS(app) # Enable CORS for frontend communication
 
 # Configure the Gemini API key from environment variables
-# IMPORTANT: Never hardcode your API key directly in code.
-# For production, set this environment variable securely.
 GEMINI_API_KEY = os.environ.get('GOOGLE_API_KEY')
 
 # Placeholder for Supabase configuration
@@ -22,9 +23,17 @@ if GEMINI_API_KEY:
 else:
     print("WARNING: GOOGLE_API_KEY environment variable not set. LLM calls will fail.")
 
+# Route to serve the frontend's index.html for the root path
 @app.route('/')
-def hello_world():
-    return 'Tobi Trivia Backend is running! This is where your LLM and Supabase magic happens.'
+def serve_index():
+    return render_template('index.html')
+
+# Route to serve static files (CSS, JS, images from React build)
+@app.route('/<path:filename>')
+def serve_static(filename):
+    # This route handles requests for static files that are not index.html
+    # It serves them from the 'static' folder configured above.
+    return send_from_directory(app.static_folder, filename)
 
 @app.route('/generate_trivia', methods=['POST'])
 def generate_trivia():
@@ -50,7 +59,6 @@ def generate_trivia():
             generation_config={
                 "response_mime_type": "application/json",
             },
-            # Pass the schema directly as a Python dict for structured output
             response_schema={
                 "type": "ARRAY",
                 "items": {
@@ -73,23 +81,16 @@ def generate_trivia():
             }
         )
 
-        # Parse the JSON response from the LLM
-        # The LLM's response.text is already a JSON string because of response_mime_type
         generated_questions = json.loads(response.text)
 
         # --- Supabase Integration (Future Enhancement) ---
         # Here, you would integrate with Supabase:
-        # 1. Fetch recent questions from Supabase to ensure no repeats (beyond in-session history).
-        #    Example:
-        #    from supabase import create_client, Client
-        #    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        #    response = supabase.table('trivia_questions').select('question_text').execute()
-        #    existing_questions = [item['question_text'] for item in response.data]
-        # 2. Filter `generated_questions` against the Supabase history.
-        # 3. Store the new, unique questions in your Supabase database.
-        #    Example:
-        #    for q in generated_questions:
-        #        supabase.table('trivia_questions').insert({"question_text": q['question'], "answer_text": q['correctAnswerKey']}).execute()
+        # from supabase import create_client, Client
+        # supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        # response = supabase.table('trivia_questions').select('question_text').execute()
+        # existing_questions = [item['question_text'] for item in response.data]
+        # Filter `generated_questions` against the Supabase history.
+        # Store the new, unique questions in your Supabase database.
         # For now, we return the LLM's output directly.
 
         return jsonify(generated_questions)
@@ -99,4 +100,4 @@ def generate_trivia():
         return jsonify({"error": f"Failed to generate trivia: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000) # Run Flask app on port 5000
+    app.run(host='0.0.0.0', port=5000)

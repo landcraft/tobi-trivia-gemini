@@ -15,6 +15,10 @@ const App = () => {
   // Topics for LLM to focus on
   const triviaTopics = "maths (addition, subtraction, multiplication, division, dates, times), science, space (solar system), literature (books like Dog Man, Pokémon, Diary of a Wimpy Kid)";
 
+  // The backend URL is now relative, as the frontend is served by the same Flask server
+  // This means the browser will automatically prepend the current host and port.
+  const backendApiPath = '/generate_trivia';
+
   // Function to fetch questions from the backend
   const fetchQuestions = async () => {
     setLoading(true);
@@ -26,7 +30,6 @@ const App = () => {
 
     try {
       // Prompt for the LLM to generate trivia questions with multiple choices
-      // This prompt will be sent to the backend, which will then call the LLM.
       const prompt = `Generate 10 engaging, humorous, and moderately difficult multiple-choice trivia questions suitable for 7-10 year olds.
       Each question should have a clear question and exactly four distinct options (A, B, C, D), with one correct answer.
       Focus on topics: ${triviaTopics}.
@@ -34,10 +37,8 @@ const App = () => {
       Ensure no direct repeats from the following recent questions: ${historyOfQuestions.slice(-20).map(q => q.question).join(', ')}.
       Format the output as a JSON array of objects, where each object has 'question', 'options' (an array of objects with 'key' and 'text'), and 'correctAnswerKey' (the key of the correct option, e.g., "A").`;
 
-      // Call the backend endpoint to generate trivia
-      // CORRECTED: Use the service name 'tobi-trivia-backend' for inter-container communication
-      const backendUrl = 'http://tobi-trivia-backend:5000/generate_trivia';
-      const response = await fetch(backendUrl, {
+      // Call the backend endpoint using the relative path
+      const response = await fetch(backendApiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: prompt }) // Send the prompt to the backend

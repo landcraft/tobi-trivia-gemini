@@ -1,6 +1,6 @@
 # Tobi's Daily Trivia
 
-Welcome to Tobi's Daily Trivia, an engaging and humorous multiple-choice quiz application designed for 7-10 year olds! This project is set up to be self-hostable using Docker and can be published to GitHub Container Registry (GHCR).
+Welcome to Tobi's Daily Trivia, an engaging and humorous multiple-choice quiz application designed for 7-10 year olds! This project is set up to be self-hostable using a single Docker image and can be published to GitHub Container Registry (GHCR).
 
 ## Features
 
@@ -11,7 +11,7 @@ Welcome to Tobi's Daily Trivia, an engaging and humorous multiple-choice quiz ap
 * **Quiz Results:** Displays a summary of the final score after 10 questions.
 * **New Questions Button:** Fetches a fresh set of 10 trivia questions (via secure backend LLM call).
 * **Topic Focus:** Questions are sourced with a focus on maths, science, space, and popular children's literature, relevant for UK, Europe, or US audiences.
-* **Dockerized:** Ready for containerized deployment.
+* **Single Docker Image:** Frontend and backend are combined into one streamlined Docker image.
 * **Multi-Architecture Docker Images:** Built for `amd64` and `arm64` via GitHub Actions.
 * **Secure API Key Handling:** LLM API key managed securely on the backend via environment variables.
 
@@ -21,25 +21,23 @@ Welcome to Tobi's Daily Trivia, an engaging and humorous multiple-choice quiz ap
 tobi-trivia-app/
 ├── .github/                     # GitHub Actions workflows
 │   └── workflows/
-│       └── docker-build.yml     # Workflow to build and push Docker images
+│       └── docker-build.yml     # Workflow to build and push Docker images (updated)
 ├── backend/                     # Python Flask backend (Handles secure API calls and DB)
-│   ├── app.py                   # Flask application (LLM integration, Supabase placeholder)
-│   ├── requirements.txt         # Python dependencies (Flask, Flask-Cors, google-generativeai)
-│   └── Dockerfile.backend       # Dockerfile for backend service
+│   ├── app.py                   # Flask application (now also serves frontend static files)
+│   └── requirements.txt         # Python dependencies (Flask, Flask-Cors, google-generativeai)
 ├── frontend/                    # ReactJS frontend application
 │   ├── public/                  # Static assets for React app
 │   │   └── index.html
 │   ├── src/                     # React source code
-│   │   ├── App.js               # Main React component for the quiz
-│   │   ├── index.js             # React entry point
-│   │   └── index.css            # Tailwind CSS imports
-│   ├── nginx.conf               # Nginx configuration for serving the React app
+│   │   ├── App.js               # Main React component for the quiz (updated for relative API path)
+│   │   ├── index.js
+│   │   └── index.css
 │   ├── package.json             # Node.js dependencies and scripts
 │   ├── postcss.config.js        # PostCSS configuration for Tailwind
-│   ├── tailwind.config.js       # Tailwind CSS configuration
-│   └── Dockerfile.frontend      # Dockerfile for frontend service (Nginx)
-├── docker-compose.yml           # Docker Compose file to orchestrate services
-└── README.md                    # This README file
+│   └── tailwind.config.js       # Tailwind CSS configuration
+├── Dockerfile                   # NEW: Combined Dockerfile for frontend and backend
+├── docker-compose.yml           # Docker Compose file to orchestrate the single service (updated)
+└── README.md                    # This README file (updated)
 ```
 
 ## Getting Started
@@ -60,7 +58,7 @@ tobi-trivia-app/
     (Replace `your-username/tobi-trivia-app` with your actual repository path after you've pushed it to GitHub).
 
 2.  **Create a `.env` file:**
-    In the root of your `tobi-trivia-app` directory, create a file named `.env` and add your API keys and Supabase URLs:
+    In the root of your `tobi-trivia-app` directory, create a file named `.env` and add your environment variables:
 
     ```dotenv
     # .env
@@ -75,18 +73,17 @@ tobi-trivia-app/
     docker-compose up --build
     ```
     This command will:
-    * Build the `frontend` image (builds the React app and sets up Nginx).
-    * Build the `backend` image (installs Python dependencies and runs the Flask app).
-    * Start both containers, passing the environment variables from your `.env` file to the `backend` service.
+    * Build the single `tobi-trivia-app` image (builds React, then Flask, and copies React assets into Flask's static/templates folders).
+    * Start the combined container, passing the environment variables from your `.env` file to the Flask application.
 
 4.  **Access the application:**
     Open your web browser and navigate to `http://localhost`.
 
-    The backend API will be available at `http://localhost:5000`.
+    The combined application (frontend and backend API) will be available on port 80.
 
 ## Deployment to GitHub Container Registry (GHCR)
 
-This repository is configured with GitHub Actions to automatically build and push multi-architecture Docker images to GHCR.
+This repository is configured with GitHub Actions to automatically build and push a single multi-architecture Docker image to GHCR.
 
 1.  **Create a GitHub Repository:**
     * Go to GitHub and create a new public repository (e.g., `tobi-trivia-app`).
@@ -105,7 +102,7 @@ This repository is configured with GitHub Actions to automatically build and pus
         ```bash
         git init
         git add .
-        git commit -m "Initial commit of Tobi's Daily Trivia App with Docker setup"
+        git commit -m "Initial commit of Tobi's Daily Trivia App with single Docker image setup"
         ```
     * Connect your local repository to your GitHub repository:
         ```bash
@@ -118,16 +115,15 @@ This repository is configured with GitHub Actions to automatically build and pus
 4.  **Monitor GitHub Actions:**
     * Once you push to `main` or create a new GitHub Release, the `docker-build.yml` workflow will automatically trigger.
     * Go to the "Actions" tab in your GitHub repository to monitor the build progress.
-    * Upon successful completion, your Docker images will be available in your GitHub Package Registry (GHCR) under the "Packages" tab of your GitHub profile/repository.
+    * Upon successful completion, your Docker image will be available in your GitHub Package Registry (GHCR) under the "Packages" tab of your GitHub profile/repository.
 
-### Pulling and Running Docker Images from GHCR
+### Pulling and Running the Combined Docker Image from GHCR
 
-Once the Docker images are published to GHCR, other users (or you on a different machine) can pull and run them without needing to build them from source.
+Once the Docker image is published to GHCR, other users (or you on a different machine) can pull and run it without needing to build it from source.
 
-1.  **Pull the Docker Images:**
+1.  **Pull the Docker Image:**
     ```bash
-    docker pull ghcr.io/YOUR_USERNAME/tobi-trivia-app/frontend:latest
-    docker pull ghcr.io/YOUR_USERNAME/tobi-trivia-app/backend:latest
+    docker pull ghcr.io/YOUR_USERNAME/tobi-trivia-app:latest
     ```
     (Replace `YOUR_USERNAME` and `tobi-trivia-app` with your actual GitHub username and repository name).
 
@@ -135,25 +131,17 @@ Once the Docker images are published to GHCR, other users (or you on a different
     In the directory where you want to run the application, create a `.env` file with your environment variables (as described in "Local Development Setup" step 2).
 
 3.  **Create a `docker-compose.yml` for deployment:**
-    Create a `docker-compose.yml` file in the same directory. Note that this version uses `image:` instead of `build:` to pull pre-built images.
+    Create a `docker-compose.yml` file in the same directory. This version uses `image:` instead of `build:` to pull the pre-built combined image.
 
     ```yaml
-    # docker-compose.yml (for running pre-built images from GHCR)
+    # docker-compose.yml (for running pre-built combined image from GHCR)
     version: '3.8'
 
     services:
-      frontend:
-        image: ghcr.io/YOUR_USERNAME/tobi-trivia-app/frontend:latest # Replace YOUR_USERNAME and tobi-trivia-app
+      tobi-trivia-app:
+        image: ghcr.io/YOUR_USERNAME/tobi-trivia-app:latest # Replace YOUR_USERNAME and tobi-trivia-app
         ports:
-          - "80:80"
-        depends_on:
-          - backend
-        restart: unless-stopped
-
-      backend:
-        image: ghcr.io/YOUR_USERNAME/tobi-trivia-app/backend:latest # Replace YOUR_USERNAME and tobi-trivia-app
-        ports:
-          - "5000:5000"
+          - "80:5000" # Map host port 80 to container port 5000 (where Flask runs)
         environment:
           # These variables will be read from your .env file
           GOOGLE_API_KEY: ${GOOGLE_API_KEY}
@@ -161,13 +149,13 @@ Once the Docker images are published to GHCR, other users (or you on a different
           SUPABASE_KEY: ${SUPABASE_KEY}
         restart: unless-stopped
     ```
-    (Remember to replace `YOUR_USERNAME` and `tobi-trivia-app` in the `image:` lines).
+    (Remember to replace `YOUR_USERNAME` and `tobi-trivia-app` in the `image:` line).
 
 4.  **Run the application:**
     ```bash
     docker-compose up -d
     ```
-    This will start the frontend and backend services using the pre-built Docker images.
+    This will start the single combined service.
 
 5.  **Access the application:**
     Open your web browser and navigate to `http://localhost`.
