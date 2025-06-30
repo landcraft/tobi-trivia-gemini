@@ -35,14 +35,9 @@ RUN pip install --no-cache-dir -r ./backend/requirements.txt
 # Copy the backend application code
 COPY backend/app.py ./backend/
 
-# Copy the built frontend static files into the backend's static directory
-# Flask, by default, looks for static files in a 'static' folder inside the app directory
-COPY --from=frontend-build-stage /app/frontend/build ./backend/static
-
-# Copy the frontend's index.html into the backend's templates directory
-# Flask, by default, looks for templates in a 'templates' folder inside the app directory
-RUN mkdir -p ./backend/templates
-COPY --from=frontend-build-stage /app/frontend/build/index.html ./backend/templates/index.html
+# Copy the entire built frontend into a 'dist' folder within the app directory
+# This 'dist' folder will contain index.html, manifest.json, and the static/ subfolder
+COPY --from=frontend-build-stage /app/frontend/build ./dist
 
 # Expose the port Flask runs on
 EXPOSE 5000
