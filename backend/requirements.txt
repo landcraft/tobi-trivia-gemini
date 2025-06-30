@@ -1,0 +1,5 @@
+Flask
+Flask-Cors
+# Add other dependencies here, e.g., for LLM client or Supabase client
+# google-generativeai
+# supabase

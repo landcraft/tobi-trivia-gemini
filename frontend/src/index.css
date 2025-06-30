@@ -1,0 +1,15 @@
+/* frontend/src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Ensure Inter font is applied globally */
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Custom animations defined in tailwind.config.js */
+/* Ensure these keyframes are properly linked if not using PostCSS setup */
