@@ -1,29 +1,30 @@
-
 version: '3.8'
 
 services:
   frontend:
     build:
-      context: . # Build context is the root of the project
-      dockerfile: ./frontend/Dockerfile.frontend # Path to the frontend Dockerfile
+      context: .
+      dockerfile: ./frontend/Dockerfile.frontend
     ports:
-      - "80:80" # Map host port 80 to container port 80
+      - "80:80"
     depends_on:
-      - backend # Frontend depends on the backend starting first
-    restart: unless-stopped # Always restart unless explicitly stopped
+      - backend
+    restart: unless-stopped
 
   backend:
     build:
-      context: . # Build context is the root of the project
-      dockerfile: ./backend/Dockerfile.backend # Path to the backend Dockerfile
+      context: .
+      dockerfile: ./backend/Dockerfile.backend
     ports:
-      - "5000:5000" # Map host port 5000 to container port 5000 (Flask default)
+      - "5000:5000"
     environment:
-      # These variables would be read by your Python backend for secure API keys
-      # You would populate these in your .env file or GitHub Secrets
-      # GOOGLE_API_KEY: "your_llm_api_key_here"
-      # SUPABASE_URL: "your_supabase_project_url"
-      # SUPABASE_KEY: "your_supabase_anon_key"
-      FLASK_APP: app.py # Specify Flask app entry point
-      FLASK_ENV: development # Set development environment for Flask
-    restart: unless-stopped # Always restart unless explicitly stopped
+      # --- IMPORTANT: Replace these with your actual keys/URLs ---
+      # For local development, create a .env file in the project root.
+      # For GitHub Actions, set these as repository secrets.
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      SUPABASE_URL: ${SUPABASE_URL} # Placeholder for future Supabase integration
+      SUPABASE_KEY: ${SUPABASE_KEY} # Placeholder for future Supabase integration
+      # ---------------------------------------------------------
+      FLASK_APP: app.py
+      FLASK_ENV: development
+    restart: unless-stopped

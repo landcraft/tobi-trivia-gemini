@@ -1,14 +1,26 @@
-from flask import Flask, jsonify, request # type: ignore
-from flask_cors import CORS # type: ignore
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 import os
 import json
+# Import the Google Generative AI client library
+import google.generativeai as genai
 
 app = Flask(__name__)
 CORS(app) # Enable CORS for frontend communication
 
-# IMPORTANT: In a real application, your LLM API key and Supabase client
-# would be initialized here using environment variables.
-# For this example, we're simulating the LLM call that the frontend currently makes.
+# Configure the Gemini API key from environment variables
+# IMPORTANT: Never hardcode your API key directly in code.
+# For production, set this environment variable securely.
+GEMINI_API_KEY = os.environ.get('GOOGLE_API_KEY')
+
+# Placeholder for Supabase configuration
+# SUPABASE_URL = os.environ.get('SUPABASE_URL')
+# SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+else:
+    print("WARNING: GOOGLE_API_KEY environment variable not set. LLM calls will fail.")
 
 @app.route('/')
 def hello_world():
@@ -17,133 +29,74 @@ def hello_world():
 @app.route('/generate_trivia', methods=['POST'])
 def generate_trivia():
     """
-    This endpoint would securely call the LLM and interact with Supabase.
-    The frontend will send the prompt content from LLM.
+    This endpoint securely calls the LLM and will handle Supabase interaction.
     """
+    if not GEMINI_API_KEY:
+        return jsonify({"error": "Gemini API key not configured on backend. Please set GOOGLE_API_KEY environment variable."}), 500
+
     data = request.get_json()
     prompt_content = data.get('prompt', '')
 
-    # --- SIMULATED LLM CALL AND SUPABASE INTERACTION ---
-    # In a real scenario:
-    # 1. You'd use a secure LLM client library (e.g., Google's Python client)
-    # 2. Your actual LLM API key would be read from an environment variable (e.g., os.environ.get('GOOGLE_API_KEY'))
-    # 3. You'd implement web scraping here if needed.
-    # 4. You'd use the Supabase Python client to:
-    #    - Fetch recent questions for repeat prevention.
-    #    - Store the newly generated unique questions.
-    #    - This ensures question history persists across sessions and is secure.
+    if not prompt_content:
+        return jsonify({"error": "No prompt content received from frontend."}), 400
 
-    # For demonstration, we'll echo a fixed structure or simulate a very basic LLM response
-    # based on the frontend's prompt request.
-    print(f"Backend received request for trivia generation with prompt:\n{prompt_content[:200]}...") # Print first 200 chars
+    try:
+        # Initialize the Gemini model
+        model = genai.GenerativeModel('gemini-2.0-flash')
 
-    # This is a placeholder response that mimics what the LLM *would* return
-    # if called from here. The frontend is still making the direct LLM call for now.
-    # You would replace this with actual LLM API call and Supabase logic.
-    mock_questions = [
-        {
-            "question": "What is 10 plus 15?",
-            "options": [
-                {"key": "A", "text": "20"},
-                {"key": "B", "text": "25"},
-                {"key": "C", "text": "30"},
-                {"key": "D", "text": "15"}
-            ],
-            "correctAnswerKey": "B"
-        },
-        {
-            "question": "Which planet is known for its beautiful rings?",
-            "options": [
-                {"key": "A", "text": "Mars"},
-                {"key": "B", "text": "Jupiter"},
-                {"key": "C", "text": "Saturn"},
-                {"key": "D", "text": "Neptune"}
-            ],
-            "correctAnswerKey": "C"
-        },
-        {
-            "question": "Who is the main character in the 'Dog Man' book series?",
-            "options": [
-                {"key": "A", "text": "Captain Underpants"},
-                {"key": "B", "text": "Dog Man"},
-                {"key": "C", "text": "Petey the Cat"},
-                {"key": "D", "text": "Lil' Petey"}
-            ],
-            "correctAnswerKey": "B"
-        },
-        {
-            "question": "If you have 3 apples and eat 1, how many do you have left?",
-            "options": [
-                {"key": "A", "text": "4"},
-                {"key": "B", "text": "3"},
-                {"key": "C", "text": "2"},
-                {"key": "D", "text": "1"}
-            ],
-            "correctAnswerKey": "C"
-        },
-        {
-            "question": "What is the largest organ in the human body?",
-            "options": [
-                {"key": "A", "text": "Brain"},
-                {"key": "B", "text": "Heart"},
-                {"key": "C", "text": "Skin"},
-                {"key": "D", "text": "Lungs"}
-            ],
-            "correctAnswerKey": "C"
-        },
-        {
-            "question": "How many minutes are in half an hour?",
-            "options": [
-                {"key": "A", "text": "15"},
-                {"key": "B", "text": "30"},
-                {"key": "C", "text": "45"},
-                {"key": "D", "text": "60"}
-            ],
-            "correctAnswerKey": "B"
-        },
-        {
-            "question": "What type of creature is Pikachu from Pokémon?",
-            "options": [
-                {"key": "A", "text": "Fire type"},
-                {"key": "B", "text": "Water type"},
-                {"key": "C", "text": "Electric type"},
-                {"key": "D", "text": "Grass type"}
-            ],
-            "correctAnswerKey": "C"
-        },
-        {
-            "question": "Which planet is closest to the Sun?",
-            "options": [
-                {"key": "A", "text": "Venus"},
-                {"key": "B", "text": "Earth"},
-                {"key": "C", "text": "Mars"},
-                {"key": "D", "text": "Mercury"}
-            ],
-            "correctAnswerKey": "D"
-        },
-        {
-            "question": "What do plants need to make their own food?",
-            "options": [
-                {"key": "A", "text": "Sugar, water, air"},
-                {"key": "B", "text": "Sunlight, water, carbon dioxide"},
-                {"key": "C", "D": "Soil, water, fertilizer"},
-                {"key": "D", "text": "Dirt, rocks, light"}
-            ],
-            "correctAnswerKey": "B"
-        },
-        {
-            "question": "Who writes in a diary in the 'Diary of a Wimpy Kid' series?",
-            "options": [
-                {"key": "A", "text": "Rodrick Heffley"},
-                {"key": "B", "text": "Manny Heffley"},
-                {"key": "C", "text": "Greg Heffley"},
-                {"key": "D", "text": "Rowley Jefferson"}
-            ],
-            "correctAnswerKey": "C"
-        }
-    ]
+        # Make the LLM call with the prompt received from the frontend
+        response = model.generate_content(
+            prompt_content,
+            generation_config={
+                "response_mime_type": "application/json",
+            },
+            # Pass the schema directly as a Python dict for structured output
+            response_schema={
+                "type": "ARRAY",
+                "items": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "question": { "type": "STRING" },
+                        "options": {
+                            "type": "ARRAY",
+                            "items": {
+                                "type": "OBJECT",
+                                "properties": {
+                                    "key": { "type": "STRING" },
+                                    "text": { "type": "STRING" }
+                                }
+                            }
+                        },
+                        "correctAnswerKey": { "type": "STRING" }
+                    }
+                }
+            }
+        )
 
-    return jsonify(mock_questions)
+        # Parse the JSON response from the LLM
+        # The LLM's response.text is already a JSON string because of response_mime_type
+        generated_questions = json.loads(response.text)
+
+        # --- Supabase Integration (Future Enhancement) ---
+        # Here, you would integrate with Supabase:
+        # 1. Fetch recent questions from Supabase to ensure no repeats (beyond in-session history).
+        #    Example:
+        #    from supabase import create_client, Client
+        #    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        #    response = supabase.table('trivia_questions').select('question_text').execute()
+        #    existing_questions = [item['question_text'] for item in response.data]
+        # 2. Filter `generated_questions` against the Supabase history.
+        # 3. Store the new, unique questions in your Supabase database.
+        #    Example:
+        #    for q in generated_questions:
+        #        supabase.table('trivia_questions').insert({"question_text": q['question'], "answer_text": q['correctAnswerKey']}).execute()
+        # For now, we return the LLM's output directly.
+
+        return jsonify(generated_questions)
+
+    except Exception as e:
+        print(f"Error generating trivia: {e}")
+        return jsonify({"error": f"Failed to generate trivia: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000) # Run Flask app on port 5000

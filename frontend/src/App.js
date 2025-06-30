@@ -1,6 +1,6 @@
 // frontend/src/App.js - Your React application code
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Brain, RefreshCw, ChevronDown, CheckCircle, Lightbulb, XCircle, ArrowRight } from 'lucide-react'; // Added XCircle and ArrowRight for icons
+import { Sparkles, Brain, RefreshCw, ChevronDown, CheckCircle, Lightbulb, XCircle, ArrowRight } from 'lucide-react';
 
 // Main App Component
 const App = () => {
@@ -12,15 +12,10 @@ const App = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [historyOfQuestions, setHistoryOfQuestions] = useState([]); // To prevent recent repeats (in-session only)
 
-  // Use a ref to store the API key, assuming it would be provided securely in a real app
-  // IMPORTANT: In a production environment, this API key MUST be handled on a secure backend.
-  // The frontend currently makes a direct LLM call for simplicity in this demo.
-  const apiKeyRef = useRef(""); // In a real app, this would be a backend concern
-
   // Topics for LLM to focus on
   const triviaTopics = "maths (addition, subtraction, multiplication, division, dates, times), science, space (solar system), literature (books like Dog Man, Pokémon, Diary of a Wimpy Kid)";
 
-  // Function to fetch questions from the LLM
+  // Function to fetch questions from the backend
   const fetchQuestions = async () => {
     setLoading(true);
     setErrorMessage('');
@@ -31,111 +26,48 @@ const App = () => {
 
     try {
       // Prompt for the LLM to generate trivia questions with multiple choices
+      // This prompt will be sent to the backend, which will then call the LLM.
       const prompt = `Generate 10 engaging, humorous, and moderately difficult multiple-choice trivia questions suitable for 7-10 year olds.
       Each question should have a clear question and exactly four distinct options (A, B, C, D), with one correct answer.
       Focus on topics: ${triviaTopics}.
       Questions should be relevant to UK, Europe, or US audiences.
       Ensure no direct repeats from the following recent questions: ${historyOfQuestions.slice(-20).map(q => q.question).join(', ')}.
-      Format the output as a JSON array of objects, where each object has 'question', 'options' (an array of objects with 'key' and 'text'), and 'correctAnswerKey' (the key of the correct option, e.g., "A").
-      Example:
-      [
-        {
-          "question": "What is 5 + 7?",
-          "options": [
-            {"key": "A", "text": "10"},
-            {"key": "B", "text": "11"},
-            {"key": "C", "text": "12"},
-            {"key": "D", "text": "13"}
-          ],
-          "correctAnswerKey": "C"
-        },
-        {
-          "question": "Which planet is known as the Red Planet?",
-          "options": [
-            {"key": "A", "text": "Jupiter"},
-            {"key": "B", "text": "Mars"},
-            {"key": "C", "text": "Venus"},
-            {"key": "D", "text": "Saturn"}
-          ],
-          "correctAnswerKey": "B"
-        }
-      ]`;
+      Format the output as a JSON array of objects, where each object has 'question', 'options' (an array of objects with 'key' and 'text'), and 'correctAnswerKey' (the key of the correct option, e.g., "A").`;
 
-      const chatHistory = [];
-      chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-
-      const payload = {
-        contents: chatHistory,
-        generationConfig: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "ARRAY",
-            items: {
-              type: "OBJECT",
-              properties: {
-                "question": { "type": "STRING" },
-                "options": {
-                  type: "ARRAY",
-                  items: {
-                    type: "OBJECT",
-                    properties: {
-                      "key": { "type": "STRING" },
-                      "text": { "type": "STRING" }
-                    }
-                  }
-                },
-                "correctAnswerKey": { "type": "STRING" }
-              },
-              "propertyOrdering": ["question", "options", "correctAnswerKey"]
-            }
-          }
-        }
-      };
-
-      // Simulating API call to the LLM (should be done on backend in production)
-      // For this demo, it calls the LLM directly.
-      // In a real deployed app, this would call your backend endpoint (e.g., '/api/generate_trivia')
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKeyRef.current}`;
-      const response = await fetch(apiUrl, {
+      // Call the backend endpoint to generate trivia
+      // IMPORTANT: In a production environment, replace 'http://localhost:5000' with your deployed backend URL.
+      // For Docker Compose, 'http://localhost:5000' will correctly route to the backend service.
+      const backendUrl = 'http://localhost:5000/generate_trivia';
+      const response = await fetch(backendUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ prompt: prompt }) // Send the prompt to the backend
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
+        throw new Error(`Backend error: ${response.status} ${response.statusText}`);
       }
 
-      const result = await response.json();
+      const parsedQuestions = await response.json();
 
-      if (result.candidates && result.candidates.length > 0 &&
-          result.candidates[0].content && result.candidates[0].content.parts &&
-          result.candidates[0].content.parts.length > 0) {
-        const jsonString = result.candidates[0].content.parts[0].text;
-        const parsedQuestions = JSON.parse(jsonString);
+      // Simple in-session repeat prevention for generated questions
+      const newQuestions = parsedQuestions.filter(q =>
+        !historyOfQuestions.some(h => h.question.toLowerCase() === q.question.toLowerCase())
+      );
 
-        // Simple in-session repeat prevention for generated questions
-        const newQuestions = parsedQuestions.filter(q =>
-          !historyOfQuestions.some(h => h.question.toLowerCase() === q.question.toLowerCase())
-        );
-
-        if (newQuestions.length < 10) {
-            console.warn(`Generated ${newQuestions.length} unique questions. Attempting to get more if possible.`);
-            // In a real scenario, you'd refine the LLM call or backend logic to ensure 10 unique questions.
-        }
-
-        setQuestions(newQuestions.slice(0, 10)); // Take up to 10 questions
-        setCurrentQuestionIndex(0); // Start from the first question
-        setScore(0); // Reset score
-        setQuizCompleted(false); // Reset quiz completion state
-
-        // Update history, keeping it to a reasonable size (e.g., last 50 questions)
-        setHistoryOfQuestions(prev => [...prev, ...newQuestions].slice(-50));
-
-      } else {
-        setErrorMessage('Failed to parse questions from LLM response.');
-        setQuestions([]);
+      if (newQuestions.length < 10) {
+          console.warn(`Generated ${newQuestions.length} unique questions. Attempting to get more if possible.`);
+          // In a real scenario, you'd refine the LLM call or backend logic to ensure 10 unique questions.
       }
+
+      setQuestions(newQuestions.slice(0, 10)); // Take up to 10 questions
+      setCurrentQuestionIndex(0); // Start from the first question
+      setScore(0); // Reset score
+      setQuizCompleted(false); // Reset quiz completion state
+
+      // Update history, keeping it to a reasonable size (e.g., last 50 questions)
+      setHistoryOfQuestions(prev => [...prev, ...newQuestions].slice(-50));
+
     } catch (error) {
       console.error("Error fetching questions:", error);
       setErrorMessage(`Failed to load questions. Please try again. (${error.message})`);
