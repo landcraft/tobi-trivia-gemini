@@ -35,9 +35,8 @@ const App = () => {
       Format the output as a JSON array of objects, where each object has 'question', 'options' (an array of objects with 'key' and 'text'), and 'correctAnswerKey' (the key of the correct option, e.g., "A").`;
 
       // Call the backend endpoint to generate trivia
-      // IMPORTANT: In a production environment, replace 'http://localhost:5000' with your deployed backend URL.
-      // For Docker Compose, 'http://localhost:5000' will correctly route to the backend service.
-      const backendUrl = 'http://localhost:5000/generate_trivia';
+      // CORRECTED: Use the service name 'tobi-trivia-backend' for inter-container communication
+      const backendUrl = 'http://tobi-trivia-backend:5000/generate_trivia';
       const response = await fetch(backendUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
