@@ -1,13 +1,16 @@
-from flask import Flask, jsonify, request, send_from_directory, render_template # type: ignore
-from flask_cors import CORS # type: ignore
+from flask import Flask, jsonify, request, send_from_directory, render_template
+from flask_cors import CORS
 import os
 import json
-import google.generativeai as genai # type: ignore
+import google.generativeai as genai
 
+# Initialize Flask app, configuring static and template folders relative to the app's root_path
+# When FLASK_APP=backend/app.py and WORKDIR /app, Flask's root_path becomes /app/backend.
+# So, static and templates folders should be referenced directly by their names within that root.
 app = Flask(
     __name__,
-    static_folder='./backend/static',  # Point to where static files are copied
-    template_folder='./backend/templates' # Point to where index.html is copied
+    static_folder='static',    # Corrected path: refers to /app/backend/static
+    template_folder='templates' # Corrected path: refers to /app/backend/templates
 )
 CORS(app) # Enable CORS for frontend communication
 
@@ -26,13 +29,15 @@ else:
 # Route to serve the frontend's index.html for the root path
 @app.route('/')
 def serve_index():
+    # Flask will look for index.html in the 'templates' folder
     return render_template('index.html')
 
 # Route to serve static files (CSS, JS, images from React build)
+# This route catches any requests for files not explicitly handled by other routes
+# and attempts to serve them from the static folder.
 @app.route('/<path:filename>')
 def serve_static(filename):
-    # This route handles requests for static files that are not index.html
-    # It serves them from the 'static' folder configured above.
+    # Flask will look for these files in the 'static' folder
     return send_from_directory(app.static_folder, filename)
 
 @app.route('/generate_trivia', methods=['POST'])

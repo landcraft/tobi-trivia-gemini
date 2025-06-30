@@ -10,7 +10,7 @@ Welcome to Tobi's Daily Trivia, an engaging and humorous multiple-choice quiz ap
 * **Score Tracking:** Tracks the player's score throughout the quiz.
 * **Quiz Results:** Displays a summary of the final score after 10 questions.
 * **New Questions Button:** Fetches a fresh set of 10 trivia questions (via secure backend LLM call).
-* **Topic Focus:** Questions are sourced with a focus on maths, science, space, and popular children's literature, relevant for UK, Europe, or US audiences.
+* **Topic Focus:** Questions are sourced with a focus on maths, science, space, and popular children's literature, relevant for UK, UK, or US audiences.
 * **Single Docker Image:** Frontend and backend are combined into one streamlined Docker image.
 * **Multi-Architecture Docker Images:** Built for `amd64` and `arm64` via GitHub Actions.
 * **Secure API Key Handling:** LLM API key managed securely on the backend via environment variables.
@@ -26,9 +26,9 @@ tobi-trivia-app/
 │   ├── app.py                   # Flask application (now also serves frontend static files)
 │   └── requirements.txt         # Python dependencies (Flask, Flask-Cors, google-generativeai)
 ├── frontend/                    # ReactJS frontend application
-│   ├── public/                  # Static assets for React app
+│   ├── public/
 │   │   └── index.html
-│   ├── src/                     # React source code
+│   ├── src/
 │   │   ├── App.js               # Main React component for the quiz (updated for relative API path)
 │   │   ├── index.js
 │   │   └── index.css
@@ -80,6 +80,10 @@ tobi-trivia-app/
     Open your web browser and navigate to `http://localhost`.
 
     The combined application (frontend and backend API) will be available on port 80.
+
+### About the "Development Server" Warning
+
+You might see a warning in your Docker logs like: "WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead." This is a standard message from Flask. Flask's built-in server is lightweight and convenient for development, but it's not designed for the demands of a production environment (e.g., handling many concurrent requests, security, stability). For a real-world, high-traffic deployment, you would typically use a production-ready WSGI (Web Server Gateway Interface) server like [Gunicorn](https://gunicorn.org/) or [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/) to run your Flask application. For this self-hostable example, the development server is sufficient, but keep this in mind for a scaled production setup.
 
 ## Deployment to GitHub Container Registry (GHCR)
 
