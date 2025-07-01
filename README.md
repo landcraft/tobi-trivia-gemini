@@ -163,6 +163,7 @@ Once the Docker image is published to GHCR, other users (or you on a different m
 To make "Tobi's Daily Trivia" truly robust and secure, the next steps involve implementing the full backend logic:
 
 * **LLM Integration:** The `backend/app.py` now includes the `google-generativeai` library and reads the API key from environment variables. You can further refine prompts or add more complex LLM interactions here.
+    * **Prompt Explanation:** The prompt sent to the Gemini LLM is carefully crafted to ensure relevant and structured trivia questions. It specifies the number of questions (10), the format (multiple-choice with four options), the target audience (7-10 year olds), and a list of desired topics (maths, science, space, popular children's literature). It also includes a mechanism to avoid recently repeated questions (using `historyOfQuestions`) and explicitly requests the output in a JSON array format with specific keys (`question`, `options`, `correctAnswerKey`). This structured prompting helps the LLM generate highly usable and consistent output for the application.
 * **Database Integration:** If you need to persist questions or user data, consider adding a database.
 * **Web Scraping:** If desired, implement web scraping using libraries like `requests` and `BeautifulSoup` in the backend to gather trivia from free online sources, then feed this data to the LLM or directly into a database.
 
