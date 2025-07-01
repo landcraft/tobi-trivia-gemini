@@ -5,18 +5,18 @@ import json
 import google.generativeai as genai
 
 # Determine the absolute path to the 'dist' folder
-# BASE_DIR will be /app/backend
+# BASE_DIR will be /app/backend (due to WORKDIR /app and FLASK_APP backend/app.py)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # DIST_DIR will be /app/dist (one level up from backend, then into dist)
 DIST_DIR = os.path.join(os.path.dirname(BASE_DIR), 'dist')
 
 app = Flask(
     __name__,
-    # Set static_folder to the 'static' subdirectory within the React build output
-    # This is where React places its CSS/JS bundles (e.g., /app/dist/static)
+    # Flask's default static_url_path is '/static'.
+    # We need to point static_folder to where React's static assets are: /app/dist/static
     static_folder=os.path.join(DIST_DIR, 'static'),
-    # Set template_folder to the root of the React build output
-    # This is where index.html, manifest.json, etc., are located (e.g., /app/dist)
+    # Flask's template_folder is where render_template looks for files.
+    # index.html is directly in /app/dist.
     template_folder=DIST_DIR
 )
 CORS(app) # Enable CORS for frontend communication
@@ -36,7 +36,7 @@ else:
 # Route to serve the frontend's index.html for the root path
 @app.route('/')
 def serve_index():
-    # Flask will look for index.html in the 'template_folder' (which is DIST_DIR)
+    # Flask will look for index.html in the 'template_folder' (which is /app/dist)
     return render_template('index.html')
 
 # Route to serve React's bundled static files (CSS, JS, etc. located in /static/)
