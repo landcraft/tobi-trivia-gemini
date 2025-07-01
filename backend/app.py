@@ -24,10 +24,6 @@ CORS(app) # Enable CORS for frontend communication
 # Configure the Gemini API key from environment variables
 GEMINI_API_KEY = os.environ.get('GOOGLE_API_KEY')
 
-# Placeholder for Supabase configuration
-# SUPABASE_URL = os.environ.get('SUPABASE_URL')
-# SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
-
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 else:
@@ -62,7 +58,7 @@ def serve_other_root_static(filename):
 @app.route('/generate_trivia', methods=['POST'])
 def generate_trivia():
     """
-    This endpoint securely calls the LLM and will handle Supabase interaction.
+    This endpoint securely calls the LLM.
     """
     if not GEMINI_API_KEY:
         return jsonify({"error": "Gemini API key not configured on backend. Please set GOOGLE_API_KEY environment variable."}), 500
@@ -78,7 +74,6 @@ def generate_trivia():
         model = genai.GenerativeModel('gemini-2.0-flash')
 
         # Make the LLM call with the prompt received from the frontend
-        # Removed 'response_schema' as it's not supported directly by generate_content for this model
         response = model.generate_content(
             prompt_content,
             generation_config={
@@ -89,16 +84,6 @@ def generate_trivia():
         # The LLM is instructed to return JSON as text, so we parse it here.
         # Ensure the LLM's response.text is a valid JSON string.
         generated_questions = json.loads(response.text)
-
-        # --- Supabase Integration (Future Enhancement) ---
-        # Here, you would integrate with Supabase:
-        # from supabase import create_client, Client
-        # supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        # response = supabase.table('trivia_questions').select('question_text').execute()
-        # existing_questions = [item['question_text'] for item in response.data]
-        # Filter `generated_questions` against the Supabase history.
-        # Store the new, unique questions in your Supabase database.
-        # For now, we return the LLM's output directly.
 
         return jsonify(generated_questions)
 

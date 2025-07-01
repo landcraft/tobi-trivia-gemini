@@ -1,4 +1,3 @@
 Flask
 Flask-Cors
 google-generativeai
-supabase # Uncomment this when you implement Supabase

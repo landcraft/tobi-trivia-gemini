@@ -11,8 +11,4 @@ services:
       # These variables will be read from your .env file or GitHub Secrets
       # They are passed directly to the Flask application
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-      SUPABASE_URL: ${SUPABASE_URL} # Placeholder for future Supabase integration
-      SUPABASE_KEY: ${SUPABASE_KEY} # Placeholder for future Supabase integration
-      FLASK_APP: backend/app.py # Specify Flask app entry point relative to WORKDIR in Dockerfile
-      FLASK_ENV: development
     restart: unless-stopped
