@@ -1,6 +1,6 @@
 // frontend/src/App.js - Your React application code
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Brain, RefreshCw, CheckCircle, Lightbulb, XCircle, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react'; // Removed useRef as it's no longer needed
+import { Sparkles, Brain, RefreshCw, CheckCircle, Lightbulb, XCircle, ArrowRight } from 'lucide-react'; // Removed ChevronDown as it's not used
 
 // Main App Component
 const App = () => {
@@ -97,7 +97,7 @@ const App = () => {
   // Fetch questions on initial load
   useEffect(() => {
     fetchQuestions();
-  }, []);
+  }, []); // Added empty dependency array to run only once on mount
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 flex flex-col items-center p-4 font-inter">
@@ -292,7 +292,7 @@ const QuizResults = ({ score, totalQuestions, onPlayAgain }) => {
     message = "Good effort! Keep practicing, you'll get even better! 👍";
     icon = <Lightbulb className="text-blue-500 mr-2" size={48} />;
   } else {
-    message = "You tried your best! Every day is a chance to learn something new! �";
+    message = "You tried your best! Every day is a chance to learn something new! 🌈";
     icon = <Brain className="text-purple-500 mr-2" size={48} />;
   }
 
@@ -316,4 +316,3 @@ const QuizResults = ({ score, totalQuestions, onPlayAgain }) => {
 };
 
 export default App;
-�
