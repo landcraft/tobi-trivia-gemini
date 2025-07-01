@@ -83,6 +83,45 @@ tobi-trivia-app/
 
 You might see a warning in your Docker logs like: "WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead." This is a standard message from Flask. Flask's built-in server is lightweight and convenient for development, but it's not designed for the demands of a production environment (e.g., handling many concurrent requests, security, stability). For a real-world, high-traffic deployment, you would typically use a production-ready WSGI (Web Server Gateway Interface) server like [Gunicorn](https://gunicorn.org/) or [uWSGI](https://uwsgi-docs.readthedocs.io/en/latest/) to run your Flask application. For this self-hostable example, the development server is sufficient, but keep this in mind for a scaled production setup.
 
+## How it Works
+
+This application, "Tobi's Daily Trivia," works by combining a React frontend with a Flask backend, all packaged neatly within a single Docker container for easy deployment. Here's a breakdown of how it functions:
+
+### 1. The Frontend (React - `frontend/src/App.js`)
+
+* **User Interface:** This is what you see in your browser. It displays the trivia questions, options, handles user selections, provides immediate feedback (correct/incorrect), tracks the score, and shows the final results.
+* **Requesting Questions:** When the page loads initially or when you click the "New Questions" button, the React frontend makes an asynchronous request to the backend. It constructs a detailed `prompt` string that instructs the Gemini LLM on what kind of trivia questions to generate (e.g., number of questions, topics, target audience, and the desired JSON output format).
+* **Displaying Data:** Once the frontend receives a successful response from the backend (which contains the generated trivia questions in JSON format), it updates its state to display the questions one by one.
+
+### 2. The Backend (Flask - `backend/app.py`)
+
+* **Serving the Frontend:** The Flask application acts as the web server for both the frontend and the API. When you access `http://localhost` (or your deployed URL), Flask serves the `index.html` file (and its associated CSS/JavaScript bundles) from the React build output.
+    * `static_folder=os.path.join(DIST_DIR, 'static')`: This tells Flask to look for React's bundled CSS and JS files (which are typically in a `static/` subdirectory within React's build) in the `dist/static` folder inside the Docker container.
+    * `template_folder=DIST_DIR`: This tells Flask to find `index.html` (the main entry point for the React app) directly in the `dist` folder.
+    * `@app.route('/static/<path:filename>')` and `@app.route('/<path:filename>')`: These routes ensure that all necessary static assets (like `main.css`, `main.js`, `manifest.json`, and even React Router paths) are correctly served to the browser.
+* **LLM API Endpoint (`/generate_trivia`):** This is the core logic for question generation.
+    * The frontend sends its `prompt` to this endpoint.
+    * The Flask backend then securely initializes the `google.generativeai` client using your `GOOGLE_API_KEY` (which is passed as an environment variable to the Docker container, keeping it out of client-side code).
+    * It calls `model.generate_content(prompt_content, generation_config={"response_mime_type": "application/json"})`. This sends the detailed prompt to the Gemini 2.0 Flash model and requests the response in JSON format.
+    * The raw text response from Gemini is then parsed as JSON using `json.loads()`.
+    * Finally, the parsed JSON (the list of trivia questions) is sent back to the frontend.
+* **Error Handling:** The backend includes `try-except` blocks to catch potential errors during the LLM call or JSON parsing, providing informative messages back to the frontend.
+
+### 3. Containerization (Docker and Docker Compose)
+
+* **`Dockerfile`:** This file acts as a blueprint for building your single Docker image.
+    * **Multi-stage build:** It first uses a `node:18-alpine` image to build the React frontend (`npm run build`). This creates a `build` directory containing all the optimized HTML, CSS, and JavaScript.
+    * Then, it switches to a `python:3.9-slim-buster` image for the backend.
+    * It copies the Python dependencies (`requirements.txt`) and the Flask application (`app.py`).
+    * Crucially, it copies the *built* React frontend from the first stage into a `/dist` directory within the Python image.
+    * It exposes port 5000, which is where the Flask app will run inside the container.
+    * The `CMD ["python", "./backend/app.py"]` instruction tells Docker to run your Flask application when the container starts.
+* **`docker-compose.yml`:** This file simplifies running your Dockerized application.
+    * It defines a single service named `tobi-trivia-app`.
+    * The `build` section tells Docker Compose to build the image using the `Dockerfile` in the current directory.
+    * `ports: - "80:5000"` maps port 80 on your host machine to port 5000 inside the container. This means you can access the application by navigating to `http://localhost` in your browser.
+    * `environment:` section passes your `GOOGLE_API_KEY` from your local `.env` file (or GitHub Secrets during deployment) into the container, making it available to your Flask backend.
+
 ## Deployment to GitHub Container Registry (GHCR)
 
 This repository is configured with GitHub Actions to automatically build and push a single multi-architecture Docker image to GHCR.
