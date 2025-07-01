@@ -1,6 +1,6 @@
 // frontend/src/App.js - Your React application code
-import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Brain, RefreshCw, ChevronDown, CheckCircle, Lightbulb, XCircle, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, Brain, RefreshCw, CheckCircle, Lightbulb, XCircle, ArrowRight } from 'lucide-react';
 
 // Main App Component
 const App = () => {
@@ -16,7 +16,6 @@ const App = () => {
   const triviaTopics = "maths (addition, subtraction, multiplication, division, dates, times), science, space (solar system), literature (books like Dog Man, Pokémon, Diary of a Wimpy Kid)";
 
   // The backend URL is now relative, as the frontend is served by the same Flask server
-  // This means the browser will automatically prepend the current host and port.
   const backendApiPath = '/generate_trivia';
 
   // Function to fetch questions from the backend
@@ -30,6 +29,7 @@ const App = () => {
 
     try {
       // Prompt for the LLM to generate trivia questions with multiple choices
+      // The backend is responsible for adding the JSON schema and other generation configs.
       const prompt = `Generate 10 engaging, humorous, and moderately difficult multiple-choice trivia questions suitable for 7-10 year olds.
       Each question should have a clear question and exactly four distinct options (A, B, C, D), with one correct answer.
       Focus on topics: ${triviaTopics}.
@@ -37,7 +37,8 @@ const App = () => {
       Ensure no direct repeats from the following recent questions: ${historyOfQuestions.slice(-20).map(q => q.question).join(', ')}.
       Format the output as a JSON array of objects, where each object has 'question', 'options' (an array of objects with 'key' and 'text'), and 'correctAnswerKey' (the key of the correct option, e.g., "A").`;
 
-      // Call the backend endpoint using the relative path
+      // The frontend now only sends the prompt text to the backend.
+      // The backend handles the LLM API call, including response_mime_type and response_schema.
       const response = await fetch(backendApiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -291,7 +292,7 @@ const QuizResults = ({ score, totalQuestions, onPlayAgain }) => {
     message = "Good effort! Keep practicing, you'll get even better! 👍";
     icon = <Lightbulb className="text-blue-500 mr-2" size={48} />;
   } else {
-    message = "You tried your best! Every day is a chance to learn something new! 🌈";
+    message = "You tried your best! Every day is a chance to learn something new! �";
     icon = <Brain className="text-purple-500 mr-2" size={48} />;
   }
 
@@ -315,3 +316,4 @@ const QuizResults = ({ score, totalQuestions, onPlayAgain }) => {
 };
 
 export default App;
+�
