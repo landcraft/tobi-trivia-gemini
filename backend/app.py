@@ -78,33 +78,16 @@ def generate_trivia():
         model = genai.GenerativeModel('gemini-2.0-flash')
 
         # Make the LLM call with the prompt received from the frontend
+        # Removed 'response_schema' as it's not supported directly by generate_content for this model
         response = model.generate_content(
             prompt_content,
             generation_config={
                 "response_mime_type": "application/json",
-            },
-            response_schema={
-                "type": "ARRAY",
-                "items": {
-                    "type": "OBJECT",
-                    "properties": {
-                        "question": { "type": "STRING" },
-                        "options": {
-                            "type": "ARRAY",
-                            "items": {
-                                "type": "OBJECT",
-                                "properties": {
-                                    "key": { "type": "STRING" },
-                                    "text": { "type": "STRING" }
-                                }
-                            }
-                        },
-                        "correctAnswerKey": { "type": "STRING" }
-                    }
-                }
             }
         )
 
+        # The LLM is instructed to return JSON as text, so we parse it here.
+        # Ensure the LLM's response.text is a valid JSON string.
         generated_questions = json.loads(response.text)
 
         # --- Supabase Integration (Future Enhancement) ---
@@ -119,6 +102,10 @@ def generate_trivia():
 
         return jsonify(generated_questions)
 
+    except json.JSONDecodeError as e:
+        print(f"Error parsing LLM response as JSON: {e}")
+        print(f"LLM raw response: {response.text if 'response' in locals() else 'No response object'}")
+        return jsonify({"error": f"Failed to parse LLM response as JSON. Please try again. ({str(e)})"}), 500
     except Exception as e:
         print(f"Error generating trivia: {e}")
         return jsonify({"error": f"Failed to generate trivia: {str(e)}"}), 500
