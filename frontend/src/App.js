@@ -13,7 +13,7 @@ const App = () => {
   const [historyOfQuestions, setHistoryOfQuestions] = useState([]); // To prevent recent repeats (in-session only)
 
   // Topics for LLM to focus on
-  const triviaTopics = "maths (addition, subtraction, multiplication, division, dates, times), science, space (solar system), literature (books like Dog Man, Pokémon, Diary of a Wimpy Kid)";
+  const triviaTopics = "maths (addition, subtraction, multiplication, division, dates, times), science, space (solar system), literature (books like Dog Man, Pokémon, Diary of a Wimpy Kid, The Bad Guys)";
 
   // The backend URL is now relative, as the frontend is served by the same Flask server
   const backendApiPath = '/generate_trivia';
