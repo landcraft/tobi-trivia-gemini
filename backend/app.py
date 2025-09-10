@@ -1,8 +1,8 @@
-from flask import Flask, jsonify, request, send_from_directory, render_template
-from flask_cors import CORS
+from flask import Flask, jsonify, request, send_from_directory, render_template # pyright: ignore[reportMissingImports]
+from flask_cors import CORS # pyright: ignore[reportMissingModuleSource]
 import os
 import json
-import google.generativeai as genai
+import google.generativeai as genai # pyright: ignore[reportMissingImports]
 
 # Determine the absolute path to the 'dist' folder
 # BASE_DIR will be /app/backend (due to WORKDIR /app and FLASK_APP backend/app.py)
